@@ -239,8 +239,8 @@ else
 fi
 
 # Mostrar as portas que serão usadas
-yad --info --title="Portas selecionadas" \
-    --text="Portas encontradas para o Koha:\n\n$PORT_SET\n\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nPressione OK para continuar com a configuração."
+yad --info --title="Configuração das Portas" \
+    --text="Portas TCP/IP disponíveis para o Koha:\n\n$PORT_SET\n\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nPressione OK para continuar com a configuração."
 
 # Configurar as portas no arquivo koha-sites.conf
 (
@@ -333,7 +333,7 @@ if [ $? -eq 0 ]; then
         # KOHA_PASS=$(sudo koha-passwd $INSTANCE_NAME)
         
         yad --info --title="Instância criada" \
-            --text="Instância '$INSTANCE_NAME' criada com sucesso!\n\nAcesso:\n- OPAC: http://localhost:8888\n- Intranet: http://localhost:8080\n\nUsuário: koha_admin\nSenha: [descomente o comando koha-passwd para obter]"
+            --text="Instância '$INSTANCE_NAME' criada com sucesso!\n\nCopie e salve as informações abaixo para posterior acesso ao banco de dados do KOha\nUsuário: koha_$INSTANCE_NAME\nSenha: [descomente o comando koha-passwd para obter]"
     fi
 fi
 
