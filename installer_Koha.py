@@ -9,21 +9,58 @@ installer_Koha.sh
 # Descomente as linhas conforme necessário e execute com cuidado.
 # =============================================================================
 
-echo "-----------------------------------------------"
-echo "     Instalador Koha - Modo Real"
-echo "-----------------------------------------------"
-echo "ATENÇÃO: As ações estão comentadas para segurança!"
-echo "Descomente as linhas conforme necessário."
-echo "-----------------------------------------------"
-
-# -----------------------------------------------------------------------------
-# Verifica se o usuário tem privilégios sudo
-# -----------------------------------------------------------------------------
-if ! sudo -n true 2>/dev/null; then
-    echo "Este script precisa de privilégios sudo para funcionar."
-    echo "Executando teste sudo..."
-    sudo -v || exit 1
+# -------------------------------------------------------------
+# Detectar distro e versão
+# -------------------------------------------------------------
+if [ -f /etc/os-release ]; then
+    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    DISTRO_VERSION=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+else
+    yad --error --title="Erro" \
+        --text="⚠️ Não foi possível identificar sua distribuição Linux.\nA instalação será abortada."
+    exit 1
 fi
+
+# -------------------------------------------------------------
+# Se compatível, segue normalmente
+# -------------------------------------------------------------
+if { [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "12" ]] || \
+     [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]] || \
+     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
+     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
+    yad --info --title="Verificação do Sistema" \
+        --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nProsseguindo com a instalação."
+    
+else
+    # ---------------------------------------------------------
+    # Se não suportado, usa YAD QUESTION para confirmar
+    # ---------------------------------------------------------
+    yad --question --title="Compatibilidade do Koha 24.11" \
+        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?"
+
+    # Se o usuário clicar em "Não"
+    if [ $? -ne 0 ]; then
+        yad --info --title="Instalação cancelada" \
+            --text="A instalação foi cancelada pelo usuário."
+        exit 1
+    fi
+
+    yad --info --title="Prosseguindo..." \
+        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."
+fi
+
+yad --form \
+    --title="Próximo Passo" \
+    --text="✅ Este passo foi concluído.\n\nClique em Próximo para continuar ou Cancelar para interromper a instalação." \
+    --button="Próximo:0" \
+    --button="Cancelar:1"
+
+if [ $? -ne 0 ]; then
+    yad --info --title="Instalação cancelada" \
+        --text="A instalação foi interrompida pelo usuário."
+    exit 1
+fi
+
 
 # -----------------------------------------------------------------------------
 # Instalação do Yad se não existir
@@ -470,27 +507,5 @@ echo "# Instalação Web pronta para ser iniciada!"
 yad --info \
     --title="Instalação Web do Koha" \
     --text="<b>Instalação via navegador (Web Installer do Koha)</b>\n - Agora inicie a INSTALAÇÃO do Koha via instalador Web:\n<a href='http://localhost:$INTRAPORT'>http://localhost:$INTRAPORT</a>\n- Acesso via rede (outra máquina na mesma rede):\n<a href='http://$IP_MACHINE:$INTRAPORT'>http://$IP_MACHINE:$INTRAPORT</a>\n<b>Credenciais iniciais:</b>\nUsername: Koha_$INSTANCE_NAME\nPassword: $KOHA_PASS\n<b>Importante:</b>\nSiga o passo a passo do instalador Web para concluir a configuração do Koha. \nApós a instalação, você poderá acessar o OPAC (catálogo público) em:\n<a href='http://localhost:$OPACPORT'>http://localhost:$OPACPORT</a>\nClique em Ok para concluir a instalção pelo instalador Web"
-
-# # -----------------------------------------------------------------------------
-# # Mensagem final
-# # -----------------------------------------------------------------------------
-# yad --info --title="Instalação Concluída" \
-#     --text="Instalação do Koha concluída!\n\nPróximos passos:\n1. Descomente os comandos no script para execução real\n2. Execute o script com privilégios sudo\n3. Configure sua biblioteca através da interface web\n\nObrigado por usar o instalador Koha!"
-
-# echo "-----------------------------------------------"
-# echo "Instalador Koha concluído."
-# echo "LEMBRE-SE: Descomente os comandos para execução real!"
-# echo "-----------------------------------------------"
-
-# # -----------------------------------------------------------------------------
-# # Script de limpeza (opcional)
-# # -----------------------------------------------------------------------------
-# cleanup() {
-#     echo "Limpando arquivos temporários..."
-#     # Adicione aqui comandos de limpeza se necessário
-# }
-
-# # Configurar trap para limpeza em caso de interrupção
-# trap cleanup EXIT
 
 exit 0
