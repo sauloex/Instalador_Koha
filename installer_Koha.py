@@ -342,7 +342,7 @@ fi
 # -----------------------------------------------------------------------------
 
 # Defina a instância do Koha aqui
-INSTANCE_NAME="redebifma"
+# INSTANCE_NAME=$INSTANCE_NAME
 
 (
 echo "10"
@@ -383,6 +383,7 @@ echo "# Tradução pt-BR instalada com sucesso."
          --text="Instalando tradução do Koha para Português do Brasil..." \
          --percentage=0 --auto-close
 
+# -----------------------------------------------------------------------------
 # Passo 13 - Configurar módulos e sites
 # -----------------------------------------------------------------------------
 (
@@ -442,6 +443,47 @@ echo "# Configuração concluída. Apache escutando nas portas $INTRAPORT e $OPA
          --title="Configurando portas do Apache" \
          --text="Configurando o Apache para liberar as portas $INTRAPORT e $OPACPORT automaticamente..." \
          --percentage=0 --auto-close
+
+# ------------------------------------------------------------------------------------
+# Passo 15 - Iniciar a instalação do software pelo instalador Web do Koha
+# ------------------------------------------------------------------------------------
+
+# Recupera o IP fora do subshell para poder usar no yad
+IP_MACHINE=$(hostname -I | awk '{print $1}')
+
+(
+echo "10"
+echo "# Preparando ambiente e recuperando IP da máquina para acesso em rede..."
+sleep 2
+
+echo "50"
+echo "# Preparando informações para o acesso ao instalador Web do Koha..."
+sleep 2
+
+echo "100"
+echo "# Instalação Web pronta para ser iniciada!"
+) | yad --progress \
+         --title="Instalador Web do Koha" \
+         --text="Preparando o ambiente para exibir as informações de acesso..." \
+         --percentage=0 --auto-close
+
+# Após a barra de progresso, exibe informações finais
+yad --info \
+    --title="Instalação Web do Koha" \
+    --text="<b>Instalação via navegador (Web Installer do Koha)</b>\n
+
+- Agora inicie a INSTALAÇÃO do Koha via instalador Web:\n
+<a href='http://localhost:$INTRAPORT'>http://localhost:$INTRAPORT</a>\n
+- Acesso via rede (outra máquina na mesma rede):\n
+  <a href='http://$IP_MACHINE:$INTRAPORT'>http://$IP_MACHINE:$INTRAPORT</a>\n
+<b>Credenciais iniciais:</b>\n
+  Username: Koha_$INSTANCE_NAME\n
+  Password: $KOHA_PASS\n
+<b>Importante:</b>\n
+Siga o passo a passo do instalador Web para concluir a configuração do Koha. \n
+Após a instalação, você poderá acessar o OPAC (catálogo público) em:\n
+  <a href='http://localhost:$OPACPORT'>http://localhost:$OPACPORT</a>\n
+Clique em Ok para concluir a instalção pelo instalador Web"
 
 # -----------------------------------------------------------------------------
 # Mensagem final
