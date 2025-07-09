@@ -471,26 +471,26 @@ yad --info \
     --title="Instalação Web do Koha" \
     --text="<b>Instalação via navegador (Web Installer do Koha)</b>\n - Agora inicie a INSTALAÇÃO do Koha via instalador Web:\n<a href='http://localhost:$INTRAPORT'>http://localhost:$INTRAPORT</a>\n- Acesso via rede (outra máquina na mesma rede):\n<a href='http://$IP_MACHINE:$INTRAPORT'>http://$IP_MACHINE:$INTRAPORT</a>\n<b>Credenciais iniciais:</b>\nUsername: Koha_$INSTANCE_NAME\nPassword: $KOHA_PASS\n<b>Importante:</b>\nSiga o passo a passo do instalador Web para concluir a configuração do Koha. \nApós a instalação, você poderá acessar o OPAC (catálogo público) em:\n<a href='http://localhost:$OPACPORT'>http://localhost:$OPACPORT</a>\nClique em Ok para concluir a instalção pelo instalador Web"
 
-# -----------------------------------------------------------------------------
-# Mensagem final
-# -----------------------------------------------------------------------------
-yad --info --title="Instalação Concluída" \
-    --text="Instalação do Koha concluída!\n\nPróximos passos:\n1. Descomente os comandos no script para execução real\n2. Execute o script com privilégios sudo\n3. Configure sua biblioteca através da interface web\n\nObrigado por usar o instalador Koha!"
+# # -----------------------------------------------------------------------------
+# # Mensagem final
+# # -----------------------------------------------------------------------------
+# yad --info --title="Instalação Concluída" \
+#     --text="Instalação do Koha concluída!\n\nPróximos passos:\n1. Descomente os comandos no script para execução real\n2. Execute o script com privilégios sudo\n3. Configure sua biblioteca através da interface web\n\nObrigado por usar o instalador Koha!"
 
-echo "-----------------------------------------------"
-echo "Instalador Koha concluído."
-echo "LEMBRE-SE: Descomente os comandos para execução real!"
-echo "-----------------------------------------------"
+# echo "-----------------------------------------------"
+# echo "Instalador Koha concluído."
+# echo "LEMBRE-SE: Descomente os comandos para execução real!"
+# echo "-----------------------------------------------"
 
-# -----------------------------------------------------------------------------
-# Script de limpeza (opcional)
-# -----------------------------------------------------------------------------
-cleanup() {
-    echo "Limpando arquivos temporários..."
-    # Adicione aqui comandos de limpeza se necessário
-}
+# # -----------------------------------------------------------------------------
+# # Script de limpeza (opcional)
+# # -----------------------------------------------------------------------------
+# cleanup() {
+#     echo "Limpando arquivos temporários..."
+#     # Adicione aqui comandos de limpeza se necessário
+# }
 
-# Configurar trap para limpeza em caso de interrupção
-trap cleanup EXIT
+# # Configurar trap para limpeza em caso de interrupção
+# trap cleanup EXIT
 
 exit 0
