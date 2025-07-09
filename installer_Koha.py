@@ -347,17 +347,17 @@ INSTANCE_NAME="redebifma"
 (
 echo "10"
 echo "# Habilitando o plack para a instância '$INSTANCE_NAME'..."
-sudo koha-plack --enable "$INSTANCE_NAME"
+# sudo koha-plack --enable "$INSTANCE_NAME"
 sleep 2
 
 echo "50"
 echo "# Iniciando o plack para a instância '$INSTANCE_NAME'..."
-sudo koha-plack --start "$INSTANCE_NAME"
+# sudo koha-plack --start "$INSTANCE_NAME"
 sleep 2
 
 echo "80"
 echo "# Reiniciando o Apache2 para aplicar alterações..."
-sudo service apache2 restart
+# sudo service apache2 restart
 sleep 2
 
 echo "100"
@@ -367,6 +367,81 @@ echo "# Módulo do Koha-Plack configurado com sucesso para '$INSTANCE_NAME'."
          --text="Configurando módulo Plack do Apache para o Koha..." \
          --percentage=0 --auto-close
 
+# -----------------------------------------------------------------------------
+# Passo 12 - Instalar a tradução do Português BR
+# -----------------------------------------------------------------------------
+(
+echo "10"
+echo "# Instalando tradução para Português do Brasil (pt-BR)..."
+# sudo koha-translate --install pt-BR
+sleep 2
+
+echo "100"
+echo "# Tradução pt-BR instalada com sucesso."
+) | yad --progress \
+         --title="Instalando tradução pt-BR" \
+         --text="Instalando tradução do Koha para Português do Brasil..." \
+         --percentage=0 --auto-close
+
+# Passo 13 - Configurar módulos e sites
+# -----------------------------------------------------------------------------
+(
+echo "10"
+echo "# Desabilitando site padrão do Apache (000-default)..."
+# sudo a2dissite 000-default
+sleep 2
+
+echo "30"
+echo "# Habilitando módulo Deflate do Apache..."
+# sudo a2enmod deflate
+sleep 2
+
+echo "60"
+echo "# Habilitando site do Apache para o Koha: '$INSTANCE_NAME'..."
+# sudo a2ensite "$INSTANCE_NAME"
+sleep 2
+
+echo "90"
+echo "# Reiniciando Apache2 para aplicar alterações..."
+# sudo service apache2 restart
+sleep 2
+
+echo "100"
+echo "# Configuração de módulos e sites concluída para '$INSTANCE_NAME'."
+) | yad --progress \
+         --title="Configurando Apache para Koha" \
+         --text="Configurando módulos e sites do Apache para o Koha..." \
+         --percentage=0 --auto-close
+
+# -----------------------------------------------------------------------------------
+#  Passo 14 - Configurar o Apache para liberar as portas 8080 e 8888 automaticamente
+# -----------------------------------------------------------------------------------
+(
+echo "10"
+echo "# Verificando se as portas já estão configuradas no ports.conf..."
+sleep 2
+
+# Verifica e adiciona se necessário
+if ! grep -q "Listen $INTRAPORT" /etc/apache2/ports.conf; then
+    echo "Listen $INTRAPORT" | sudo tee -a /etc/apache2/ports.conf > /dev/null
+fi
+
+if ! grep -q "Listen $OPACPORT" /etc/apache2/ports.conf; then
+    echo "Listen $OPACPORT" | sudo tee -a /etc/apache2/ports.conf > /dev/null
+fi
+
+echo "80"
+echo "# Reiniciando Apache2 para aplicar alterações..."
+sudo service apache2 restart
+sleep 2
+
+echo "100"
+echo "# Configuração concluída. Apache escutando nas portas $INTRAPORT e $OPACPORT."
+
+) | yad --progress \
+         --title="Configurando portas do Apache" \
+         --text="Configurando o Apache para liberar as portas $INTRAPORT e $OPACPORT automaticamente..." \
+         --percentage=0 --auto-close
 
 # -----------------------------------------------------------------------------
 # Mensagem final
