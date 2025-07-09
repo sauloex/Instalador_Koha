@@ -126,9 +126,16 @@ echo "# Configuração das chaves concluída."
 (
 echo "10"
 echo "# Adicionando repositório Koha 24.11..."
-# echo "deb [signed-by=/etc/apt/keyrings/koha.gpg] https://debian.koha-community.org/koha 24.11 main" | sudo tee /etc/apt/sources.list.d/koha.list
+#sudo tee /etc/apt/sources.list.d/koha.sources <<EOF
+# Types: deb
+# URIs: https://debian.koha-community.org/koha/
+# Suites: 24.11
+# Components: main
+# Signed-By: /etc/apt/keyrings/koha.asc 
+# EOF
 sleep 1
 echo "50"
+
 echo "# Atualizando lista de pacotes..."
 # sudo apt update
 sleep 2
@@ -190,30 +197,74 @@ echo "# koha-common instalado com sucesso."
          --percentage=0 --auto-close
 
 # -----------------------------------------------------------------------------
-# Passo 8 - Alteração das portas em koha-sites.conf
+# Função para verificar se uma porta está em uso
 # -----------------------------------------------------------------------------
+check_port() {
+    local port=$1
+    if netstat -tuln | grep -q ":$port "; then
+        return 1  # Porta em uso
+    else
+        return 0  # Porta livre
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Passo 8 - Configuração das portas com sequência específica
+# -----------------------------------------------------------------------------
+
+INTRAPORT=""
+OPACPORT=""
+PORT_SET=""
+
+# Teste 1: Portas 8080 e 8888
+if check_port 8080 && check_port 8888; then
+    INTRAPORT=8080
+    OPACPORT=8888
+    PORT_SET="Conjunto 1: 8080/8888"
+# Teste 2: Portas 9080 e 9123
+elif check_port 9080 && check_port 9123; then
+    INTRAPORT=9080
+    OPACPORT=9123
+    PORT_SET="Conjunto 2: 9080/9123"
+# Teste 3: Portas 9876 e 12021
+elif check_port 9876 && check_port 12021; then
+    INTRAPORT=9876
+    OPACPORT=12021
+    PORT_SET="Conjunto 3: 9876/12021"
+# Nenhuma combinação disponível
+else
+    yad --error --title="Erro - Portas não disponíveis" \
+        --text="Nenhuma das combinações de portas está disponível:\n\n• Conjunto 1: 8080/8888\n• Conjunto 2: 9080/9123\n• Conjunto 3: 9876/12021\n\nPor favor, verifique quais portas estão em uso e libere uma das combinações antes de continuar."
+    exit 1
+fi
+
+# Mostrar as portas que serão usadas
+yad --info --title="Portas selecionadas" \
+    --text="Portas encontradas para o Koha:\n\n$PORT_SET\n\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nPressione OK para continuar com a configuração."
+
+# Configurar as portas no arquivo koha-sites.conf
 (
 echo "10"
 echo "# Fazendo backup do arquivo koha-sites.conf..."
 # sudo cp /etc/koha/koha-sites.conf /etc/koha/koha-sites.conf.backup
 sleep 1
 echo "40"
-echo "# Alterando INTRAPORT para 8080..."
-# sudo sed -i 's/INTRAPORT="80"/INTRAPORT="8080"/' /etc/koha/koha-sites.conf
+echo "# Configurando INTRAPORT para $INTRAPORT..."
+# sudo sed -i "s/INTRAPORT=\"80\"/INTRAPORT=\"$INTRAPORT\"/" /etc/koha/koha-sites.conf
 sleep 1
 echo "70"
-echo "# Alterando OPACPORT para 8888..."
-# sudo sed -i 's/OPACPORT="80"/OPACPORT="8888"/' /etc/koha/koha-sites.conf
+echo "# Configurando OPACPORT para $OPACPORT..."
+# sudo sed -i "s/OPACPORT=\"80\"/OPACPORT=\"$OPACPORT\"/" /etc/koha/koha-sites.conf
 sleep 1
 echo "100"
 echo "# Portas configuradas no arquivo koha-sites.conf."
 ) | yad --progress \
     --title="Configurando portas Koha" \
-    --text="Alterando as portas INTRAPORT e OPACPORT no arquivo koha-sites.conf..." \
+    --text="Configurando as portas INTRAPORT e OPACPORT no arquivo koha-sites.conf..." \
     --percentage=0 --auto-close
 
-yad --info --title="Portas configuradas" \
-    --text="As portas INTRAPORT e OPACPORT foram alteradas para 8080 e 8888, respectivamente.\n\nBackup salvo em: /etc/koha/koha-sites.conf.backup"
+yad --info --title="Portas configuradas com sucesso" \
+    --text="As portas foram configuradas com sucesso!\n\n$PORT_SET\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nBackup salvo em: /etc/koha/koha-sites.conf.backup"
 
 # -----------------------------------------------------------------------------
 # Passo 9 - Configuração do Apache (mod_cgi, mod_rewrite, headers, proxy_http)
