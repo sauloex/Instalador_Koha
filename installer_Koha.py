@@ -338,27 +338,35 @@ if [ $? -eq 0 ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# Passo 11 - Verificação final dos serviços
+# Passo 11 - Definir um módulo do Apache para trabalhos do koha-plack
 # -----------------------------------------------------------------------------
+
+# Defina a instância do Koha aqui
+INSTANCE_NAME="redebifma"
+
 (
 echo "10"
-echo "# Verificando status do Apache..."
-# systemctl is-active --quiet apache2 && echo "Apache: OK" || echo "Apache: ERRO"
-sleep 1
-echo "40"
-echo "# Verificando status do MariaDB..."
-# systemctl is-active --quiet mariadb && echo "MariaDB: OK" || echo "MariaDB: ERRO"
-sleep 1
-echo "70"
-echo "# Verificando instalação do Koha..."
-# dpkg -l | grep koha-common && echo "Koha: OK" || echo "Koha: ERRO"
-sleep 1
+echo "# Habilitando o plack para a instância '$INSTANCE_NAME'..."
+sudo koha-plack --enable "$INSTANCE_NAME"
+sleep 2
+
+echo "50"
+echo "# Iniciando o plack para a instância '$INSTANCE_NAME'..."
+sudo koha-plack --start "$INSTANCE_NAME"
+sleep 2
+
+echo "80"
+echo "# Reiniciando o Apache2 para aplicar alterações..."
+sudo service apache2 restart
+sleep 2
+
 echo "100"
-echo "# Verificação concluída."
+echo "# Módulo do Koha-Plack configurado com sucesso para '$INSTANCE_NAME'."
 ) | yad --progress \
-     --title="Verificação final" \
-     --text="Verificando status dos serviços..." \
-     --percentage=0 --auto-close
+         --title="Configurando Koha-Plack" \
+         --text="Configurando módulo Plack do Apache para o Koha..." \
+         --percentage=0 --auto-close
+
 
 # -----------------------------------------------------------------------------
 # Mensagem final
