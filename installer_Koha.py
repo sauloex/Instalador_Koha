@@ -66,10 +66,10 @@ fi
 
 # Se compatível, segue normalmente---------------------------------
 
-if { [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "12" ]] || \
-     [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]] || \
-     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
-     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
+if { [[ "$DISTRO_ID" == "Debian" && "$DISTRO_VERSION" == "12" ]] || \
+     [[ "$DISTRO_ID" == "Debian" && "$DISTRO_VERSION" == "11" ]] || \
+     [[ "$DISTRO_ID" == "Ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
+     [[ "$DISTRO_ID" == "Ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
 
 # Cancelar instalação -------------------------------------------------
     yad --form --title="Sistema Detectado" \
@@ -81,26 +81,8 @@ else
     # Se não suportado, usa YAD QUESTION para confirmar---------------------
     
     yad --question --title="Compatibilidade do Koha 24.11" \
-        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?"
-
-    # Se o usuário clicar em "Não"-------------------------------------------
-    if [ $? -ne 0 ]; then
-        yad --info --title="Instalação cancelada" \
-            --text="A instalação foi cancelada pelo usuário."
-        exit 1
-    fi
-
-    yad --info --title="Prosseguindo..." \
-        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."
-    yad --form \
-        --title="Sistema Detectado" \
-        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."\
-        --button="Próximo:0" \
-        --button="Cancelar:1"
-    if [ $? -ne 0 ]; then
-        exit 1
-    fi
-fi
+        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?" \
+        --button="Sim:0" --button="Cancelar:1" || exit 1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
 # Passo 2 - Atualização do sistema
