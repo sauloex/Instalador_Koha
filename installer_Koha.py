@@ -79,12 +79,12 @@ if [[ "$DISTRO_ID" == "debian" && ( "$DISTRO_VERSION" == "12" || "$DISTRO_VERSIO
     # Sistema suportado - confirmar instalação
     yad --question --title="Sistema Detectado" \
         --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nDeseja prosseguir com a instalação?" \
-        --button="Sim:0" --button="Cancelar:1" || exit 1
+       --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 else
     # Sistema não suportado - avisar e confirmar
     yad --question --title="Compatibilidade do Koha 24.11" \
         --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?" \
-        --button="Sim:0" --button="Cancelar:1" || exit 1
+        --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 fi
 
 
@@ -106,6 +106,10 @@ echo "# Sistema atualizado com sucesso."
          --title="Atualizando sistema" \
          --text="Iniciando atualização do sistema..." \
          --percentage=0 --auto-close
+
+ yad --question --title="Atualização do sistema" \
+        --text="✅ A atualização da lista de pacotes disponíveis e a instalação das atualizações necessárias foram concluídas.\nQuer prosseguir com a instalação?" \
+        --button="Cancelar:1" --button="Prosseguir:0" || exit 1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
 # Passo 3 - Configuração das chaves do repositório do Koha
