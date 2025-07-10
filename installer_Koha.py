@@ -56,33 +56,37 @@ fi
 # Detectar distro e versão
 # -------------------------------------------------------------------------------------------------------------------------------------------
 if [ -f /etc/os-release ]; then
-    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    # Extrair ID e VERSION_ID, normalizando case
+    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"' | tr '[:upper:]' '[:lower:]')
     DISTRO_VERSION=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    
+    # Verificar se os campos foram encontrados
+    if [ -z "$DISTRO_ID" ] || [ -z "$DISTRO_VERSION" ]; then
+        yad --error --title="Erro" \
+            --text="⚠️ Não foi possível identificar completamente sua distribuição Linux.\nA instalação será abortada."
+        exit 1
+    fi
 else
     yad --error --title="Erro" \
         --text="⚠️ Não foi possível identificar sua distribuição Linux.\nA instalação será abortada."
     exit 1
 fi
 
-# Se compatível, segue normalmente---------------------------------
+# Verificar compatibilidade
+if [[ "$DISTRO_ID" == "debian" && ( "$DISTRO_VERSION" == "12" || "$DISTRO_VERSION" == "11" ) ]] || \
+   [[ "$DISTRO_ID" == "ubuntu" && ( "$DISTRO_VERSION" == "24.04" || "$DISTRO_VERSION" == "22.04" ) ]]; then
 
-if { [[ "$DISTRO_ID" == "Debian" && "$DISTRO_VERSION" == "12" ]] || \
-     [[ "$DISTRO_ID" == "Debian" && "$DISTRO_VERSION" == "11" ]] || \
-     [[ "$DISTRO_ID" == "Ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
-     [[ "$DISTRO_ID" == "Ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
-
-# Cancelar instalação -------------------------------------------------
-    yad --form --title="Sistema Detectado" \
-    --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nQuer prosseguir com a instalação?" \
-    --button="Sim:0" --button="Cancelar:1" || exit 1
-  
+    # Sistema suportado - confirmar instalação
+    yad --question --title="Sistema Detectado" \
+        --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nDeseja prosseguir com a instalação?" \
+        --button="Sim:0" --button="Cancelar:1" || exit 1
 else
-   
-    # Se não suportado, usa YAD QUESTION para confirmar---------------------
-    
+    # Sistema não suportado - avisar e confirmar
     yad --question --title="Compatibilidade do Koha 24.11" \
         --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?" \
         --button="Sim:0" --button="Cancelar:1" || exit 1
+fi
+
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
 # Passo 2 - Atualização do sistema
