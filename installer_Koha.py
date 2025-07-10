@@ -109,7 +109,7 @@ echo "# Sistema atualizado com sucesso."
 
  yad --question --title="Atualização do sistema" \
         --text="✅ A atualização da lista de pacotes disponíveis e a instalação das atualizações necessárias foram concluídas.\nQuer prosseguir com a instalação?" \
-        --button="Cancelar:1" --button="Prosseguir:0" || exit 1
+        --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
 # Passo 3 - Configuração das chaves do repositório do Koha
@@ -214,12 +214,17 @@ echo "100"
 echo "# koha-common instalado com sucesso."
 ) | yad --progress \
          --title="Instalando Koha" \
-         --text="Instalando pacote koha-common..." \
+         --text="Instalando pacote koha-common (Este processo pode demorar alguns minutos)..." \
          --percentage=0 --auto-close
 
+
+
 # -------------------------------------------------------------------------------------------------------------------------------------------
-# Função para verificar se uma porta está em uso
+# Passo 8 - Configuração das portas com sequência específica
 # -------------------------------------------------------------------------------------------------------------------------------------------
+
+# Função para verificar se uma porta está em uso-----------------
+
 check_port() {
     local port=$1
     if netstat -tuln | grep -q ":$port "; then
@@ -229,9 +234,6 @@ check_port() {
     fi
 }
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 8 - Configuração das portas com sequência específica
-# -------------------------------------------------------------------------------------------------------------------------------------------
 
 INTRAPORT=""
 OPACPORT=""
