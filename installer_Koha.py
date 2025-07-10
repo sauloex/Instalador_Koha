@@ -1,5 +1,3 @@
-installer_Koha.sh
-@@ -1,217 +0,0 @@
 #!/bin/bash
 
 # =============================================================================
@@ -8,59 +6,6 @@ installer_Koha.sh
 # ATENÇÃO: Este script contém comandos reais do sistema!
 # Descomente as linhas conforme necessário e execute com cuidado.
 # =============================================================================
-
-# -------------------------------------------------------------
-# Detectar distro e versão
-# -------------------------------------------------------------
-if [ -f /etc/os-release ]; then
-    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-    DISTRO_VERSION=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-else
-    yad --error --title="Erro" \
-        --text="⚠️ Não foi possível identificar sua distribuição Linux.\nA instalação será abortada."
-    exit 1
-fi
-
-# -------------------------------------------------------------
-# Se compatível, segue normalmente
-# -------------------------------------------------------------
-if { [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "12" ]] || \
-     [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]] || \
-     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
-     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
-    yad --info --title="Verificação do Sistema" \
-        --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nProsseguindo com a instalação."
-    
-else
-    # ---------------------------------------------------------
-    # Se não suportado, usa YAD QUESTION para confirmar
-    # ---------------------------------------------------------
-    yad --question --title="Compatibilidade do Koha 24.11" \
-        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?"
-
-    # Se o usuário clicar em "Não"
-    if [ $? -ne 0 ]; then
-        yad --info --title="Instalação cancelada" \
-            --text="A instalação foi cancelada pelo usuário."
-        exit 1
-    fi
-
-    yad --info --title="Prosseguindo..." \
-        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."
-fi
-
-yad --form \
-    --title="Próximo Passo" \
-    --text="✅ Este passo foi concluído.\n\nClique em Próximo para continuar ou Cancelar para interromper a instalação." \
-    --button="Próximo:0" \
-    --button="Cancelar:1"
-
-if [ $? -ne 0 ]; then
-    yad --info --title="Instalação cancelada" \
-        --text="A instalação foi interrompida pelo usuário."
-    exit 1
-fi
-
 
 # -----------------------------------------------------------------------------
 # Instalação do Yad se não existir
@@ -106,6 +51,83 @@ then
 else
     echo "Yad já está instalado!"
 fi
+
+# -------------------------------------------------------------
+# Detectar distro e versão
+# -------------------------------------------------------------
+if [ -f /etc/os-release ]; then
+    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    DISTRO_VERSION=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+else
+    yad --error --title="Erro" \
+        --text="⚠️ Não foi possível identificar sua distribuição Linux.\nA instalação será abortada."
+    exit 1
+fi
+
+# -------------------------------------------------------------
+# Se compatível, segue normalmente
+# -------------------------------------------------------------
+if { [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "12" ]] || \
+     [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]] || \
+     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
+     [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]]; }; then
+    #  yad --info --title="Verificação do Sistema" \
+    #      --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nProsseguindo com a instalação."
+    # yad --form \
+    # --title="Sistema Detectado" \
+    # --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nProsseguindo com a instalação." \
+    # --button="Próximo:0" \
+    # --button="Cancelar:1"
+
+    # if [ $? -ne 0 ]; then
+    #     exit 1
+    # fi
+
+    yad --form --title="Sistema Detectado" \
+    --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nQuer prosseguir com a instalação?" \
+    --button="Sim:0" --button="Cancelar:1" || exit 1
+
+
+  
+else
+    # ---------------------------------------------------------
+    # Se não suportado, usa YAD QUESTION para confirmar
+    # ---------------------------------------------------------
+    yad --question --title="Compatibilidade do Koha 24.11" \
+        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?"
+
+    # Se o usuário clicar em "Não"
+    if [ $? -ne 0 ]; then
+        yad --info --title="Instalação cancelada" \
+            --text="A instalação foi cancelada pelo usuário."
+        exit 1
+    fi
+
+    yad --info --title="Prosseguindo..." \
+        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."
+    yad --form \
+        --title="Sistema Detectado" \
+        --text="⚠️ Prosseguindo com a instalação por sua conta e risco..."\
+        --button="Próximo:0" \
+        --button="Cancelar:1"
+    if [ $? -ne 0 ]; then
+        # yad --info --title="Instalação cancelada" \
+        #     --text="A instalação foi interrompida pelo usuário."
+        exit 1
+    fi
+fi
+
+# yad --form \
+#     --title="Sistema Detectado" \
+#     --text="✅ Este passo foi concluído.\n\nClique em Próximo para continuar ou Cancelar para interromper a instalação." \
+#     --button="Próximo:0" \
+#     --button="Cancelar:1"
+
+# if [ $? -ne 0 ]; then
+#     yad --info --title="Instalação cancelada" \
+#         --text="A instalação foi interrompida pelo usuário."
+#     exit 1
+# fi
 
 # -----------------------------------------------------------------------------
 # Passo 2 - Atualização do sistema
