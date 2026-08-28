@@ -1,15 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # =============================================================================
-# Instalador gráfico do Koha - MODO REAL (ações comentadas para segurança)
+# Instalador gráfico do Koha - MODO SIMULAÇÃO (Ações do sistema comentadas)
 # =============================================================================
-# ATENÇÃO: Este script contém comandos reais do sistema!
-# Descomente as linhas conforme necessário e execute com cuidado.
+# ATENÇÃO: Os comandos do sistema estão comentados com # para segurança.
+# Para aplicar as mudanças na VM, descomente os comandos reais conforme necessário.
 # =============================================================================
 
-# --------------------------------------------------------------------------------------------------------------------------------
-# Instalação do Yad se não existir
-# --------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passo 1: Instalação do Yad se não existir
+# -----------------------------------------------------------------------------
 if ! command -v yad &> /dev/null
 then
     if command -v zenity &> /dev/null
@@ -52,15 +52,13 @@ else
     echo "Yad já está instalado!"
 fi
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Detectar distro e versão
-# -------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passo 2: Detectar distro e versão
+# -----------------------------------------------------------------------------
 if [ -f /etc/os-release ]; then
-    # Extrair ID e VERSION_ID, normalizando case
     DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"' | tr '[:upper:]' '[:lower:]')
     DISTRO_VERSION=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
     
-    # Verificar se os campos foram encontrados
     if [ -z "$DISTRO_ID" ] || [ -z "$DISTRO_VERSION" ]; then
         yad --error --title="Erro" \
             --text="⚠️ Não foi possível identificar completamente sua distribuição Linux.\nA instalação será abortada."
@@ -72,25 +70,21 @@ else
     exit 1
 fi
 
-# Verificar compatibilidade
 if [[ "$DISTRO_ID" == "debian" && ( "$DISTRO_VERSION" == "12" || "$DISTRO_VERSION" == "11" ) ]] || \
    [[ "$DISTRO_ID" == "ubuntu" && ( "$DISTRO_VERSION" == "24.04" || "$DISTRO_VERSION" == "22.04" ) ]]; then
 
-    # Sistema suportado - confirmar instalação
     yad --question --title="Sistema Detectado" \
-        --text="✅ Sistema detectado: $DISTRO_ID $DISTRO_VERSION\n\nEste sistema é suportado oficialmente.\nDeseja prosseguir com a instalação?" \
-       --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
+        --text="✅ Sistema detectado: <b>$DISTRO_ID $DISTRO_VERSION</b>\n\nEste sistema é suportado oficialmente.\nDeseja prosseguir com a instalação?" \
+        --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 else
-    # Sistema não suportado - avisar e confirmar
     yad --question --title="Compatibilidade do Koha 24.11" \
-        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nIsso significa que a instalação pode falhar ou não funcionar corretamente.\n\nDeseja prosseguir mesmo assim?" \
+        --text="⚠️ Seu sistema foi detectado como:\n\n<b>$DISTRO_ID $DISTRO_VERSION</b>\n\nNão está na lista oficial de suporte do Koha 24.11.\nDeseja prosseguir mesmo assim?" \
         --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 fi
 
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 2 - Atualização do sistema
-# -------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passo 3: Atualização do sistema
+# -----------------------------------------------------------------------------
 (
 echo "10"
 echo "# Executando: sudo apt update"
@@ -107,13 +101,13 @@ echo "# Sistema atualizado com sucesso."
          --text="Iniciando atualização do sistema..." \
          --percentage=0 --auto-close
 
- yad --question --title="Atualização do sistema" \
-        --text="✅ A atualização da lista de pacotes disponíveis e a instalação das atualizações necessárias foram concluídas.\nQuer prosseguir com a instalação?" \
-        --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
+yad --question --title="Atualização do sistema" \
+    --text="✅ A atualização da lista de pacotes e instalação concluídas.\nQuer prosseguir com a instalação?" \
+    --button="Cancelar:1" --button="<b>Prosseguir</b>:0" || exit 1
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 3 - Configuração das chaves do repositório do Koha
-# -------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passo 4: Configuração das chaves do repositório do Koha 24.11
+# -----------------------------------------------------------------------------
 (
 echo "10"
 echo "# Instalando pacotes essenciais..."
@@ -125,376 +119,197 @@ echo "# Criando diretório para chaves..."
 sleep 1
 echo "50"
 echo "# Baixando chave GPG do Koha..."
-# curl -fsSL https://debian.koha-community.org/koha/gpg.asc | sudo gpg --dearmor -o /etc/apt/keyrings/koha.gpg
+# curl -fsSL https://debian.koha-community.org/koha/gpg.asc | sudo gpg --dearmor -o /etc/apt/keyrings/koha.gpg --overwrite
 sleep 2
 echo "70"
-echo "# Atualizando lista de pacotes..."
-# sudo apt update
+echo "# Adicionando repositório Koha 24.11..."
+# echo "deb [signed-by=/etc/apt/keyrings/koha.gpg] https://debian.koha-community.org/koha 24.11 main" | sudo tee /etc/apt/sources.list.d/koha.list
 sleep 1
 echo "90"
-echo "# Atualizando pacotes..."
-# sudo apt upgrade -y
-sleep 2
-echo "100"
-echo "# Configuração das chaves concluída."
-) | yad --progress \
-         --title="Configurando repositórios do Koha" \
-         --text="Configurando as chaves GPG e repositórios do Koha..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 4 - Adição do repositório Koha 24.11 e atualização do apt
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Adicionando repositório Koha 24.11..."
-#sudo tee /etc/apt/sources.list.d/koha.sources <<EOF
-# Types: deb
-# URIs: https://debian.koha-community.org/koha/
-# Suites: 24.11
-# Components: main
-# Signed-By: /etc/apt/keyrings/koha.asc 
-# EOF
-sleep 1
-echo "50"
-
 echo "# Atualizando lista de pacotes..."
 # sudo apt update
 sleep 2
 echo "100"
-echo "# Repositório Koha 24.11 configurado."
+echo "# Repositório e chaves configurados."
 ) | yad --progress \
-         --title="Configurando repositório Koha 24.11" \
-         --text="Adicionando repositório Koha versão 24.11..." \
+         --title="Configurando repositórios do Koha" \
+         --text="Configurando as chaves GPG e repositório Koha 24.11..." \
          --percentage=0 --auto-close
 
-#-------------------------------------------------------------------------------------------------------------------------------------------- Passo 5 - Instalação do Apache2
-# -------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passos 5, 6 e 7: Instalação dos Serviços Base (Apache2, MariaDB e Koha Common)
+# -----------------------------------------------------------------------------
 (
 echo "10"
-echo "# Instalando apache2..."
+echo "# Instalando Apache2..."
 # sudo apt install -y apache2
-sleep 3
-echo "100"
-echo "# Apache2 instalado com sucesso."
-) | yad --progress \
-         --title="Instalando Apache2" \
-         --text="Instalando servidor web Apache2..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 6 - Instalação do MariaDB
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Instalando mariadb-server..."
+sleep 2
+echo "40"
+echo "# Instalando MariaDB..."
 # sudo apt install -y mariadb-server
-sleep 3
-echo "50"
-echo "# Iniciando serviço MariaDB..."
 # sudo systemctl start mariadb
 # sudo systemctl enable mariadb
-sleep 1
-echo "100"
-echo "# MariaDB instalado e iniciado."
-) | yad --progress \
-         --title="Instalando MariaDB" \
-         --text="Instalando servidor de banco de dados MariaDB..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 7 - Instalação do koha-common
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Instalando koha-common..."
+sleep 2
+echo "70"
+echo "# Instalando Koha-Common..."
 # sudo apt install -y koha-common
-sleep 4
+sleep 3
 echo "100"
-echo "# koha-common instalado com sucesso."
+echo "# Serviços base instalados com sucesso."
 ) | yad --progress \
-         --title="Instalando Koha" \
-         --text="Instalando pacote koha-common (Este processo pode demorar alguns minutos)..." \
+         --title="Instalando Serviços Base" \
+         --text="Instalando Apache2, MariaDB e Koha-Common..." \
          --percentage=0 --auto-close
 
-
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 8 - Configuração das portas com sequência específica
-# -------------------------------------------------------------------------------------------------------------------------------------------
-
-# Função para verificar se uma porta está em uso-----------------
-
+# -----------------------------------------------------------------------------
+# Passo 8: Configuração das portas
+# -----------------------------------------------------------------------------
 check_port() {
     local port=$1
-    if netstat -tuln | grep -q ":$port "; then
-        return 1  # Porta em uso
+    if command -v ss &>/dev/null; then
+        ss -tuln | grep -qE ":$port\s" && return 1 || return 0
     else
-        return 0  # Porta livre
+        (echo > /dev/tcp/127.0.0.1/"$port") &>/dev/null && return 1 || return 0
     fi
 }
-
 
 INTRAPORT=""
 OPACPORT=""
 PORT_SET=""
 
-# Teste 1: Portas 8080 e 8888------------------------------
 if check_port 8080 && check_port 8888; then
-    INTRAPORT=8080
-    OPACPORT=8888
-    PORT_SET="Conjunto 1: 8080/8888"
-
-# Teste 2: Portas 9080 e 9123------------------------------
+    INTRAPORT=8080; OPACPORT=8888; PORT_SET="Conjunto 1: 8080/8888"
 elif check_port 9080 && check_port 9123; then
-    INTRAPORT=9080
-    OPACPORT=9123
-    PORT_SET="Conjunto 2: 9080/9123"
-
-# Teste 3: Portas 9876 e 12021------------------------------
+    INTRAPORT=9080; OPACPORT=9123; PORT_SET="Conjunto 2: 9080/9123"
 elif check_port 9876 && check_port 12021; then
-    INTRAPORT=9876
-    OPACPORT=12021
-    PORT_SET="Conjunto 3: 9876/12021"
-
-# Nenhuma combinação disponível-----------------------------
+    INTRAPORT=9876; OPACPORT=12021; PORT_SET="Conjunto 3: 9876/12021"
 else
     yad --error --title="Erro - Portas não disponíveis" \
-        --text="Nenhuma das combinações de portas está disponível:\n\n• Conjunto 1: 8080/8888\n• Conjunto 2: 9080/9123\n• Conjunto 3: 9876/12021\n\nPor favor, verifique quais portas estão em uso e libere uma das combinações antes de continuar."
+        --text="Nenhuma combinação de portas livre (8080/8888, 9080/9123, 9876/12021)."
     exit 1
 fi
 
-# Mostrar as portas que serão usadas--------------------------
 yad --info --title="Configuração das Portas" \
-    --text="Portas TCP/IP disponíveis para o Koha:\n\n$PORT_SET\n\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nPressione OK para continuar com a configuração."
+    --text="Portas disponíveis para o Koha:\n\n$PORT_SET\n\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT"
 
-# Configurar as portas no arquivo koha-sites.conf--------------
 (
 echo "10"
-echo "# Fazendo backup do arquivo koha-sites.conf..."
+echo "# Fazendo backup do koha-sites.conf..."
 # sudo cp /etc/koha/koha-sites.conf /etc/koha/koha-sites.conf.backup
 sleep 1
-echo "40"
-echo "# Configurando INTRAPORT para $INTRAPORT..."
-# sudo sed -i "s/INTRAPORT=\"80\"/INTRAPORT=\"$INTRAPORT\"/" /etc/koha/koha-sites.conf
-sleep 1
-echo "70"
-echo "# Configurando OPACPORT para $OPACPORT..."
-# sudo sed -i "s/OPACPORT=\"80\"/OPACPORT=\"$OPACPORT\"/" /etc/koha/koha-sites.conf
+echo "50"
+echo "# Configurando INTRAPORT para $INTRAPORT e OPACPORT para $OPACPORT..."
+# sudo sed -i "s/^INTRAPORT=.*/INTRAPORT=\"$INTRAPORT\"/" /etc/koha/koha-sites.conf
+# sudo sed -i "s/^OPACPORT=.*/OPACPORT=\"$OPACPORT\"/" /etc/koha/koha-sites.conf
 sleep 1
 echo "100"
 echo "# Portas configuradas no arquivo koha-sites.conf."
 ) | yad --progress \
     --title="Configurando portas Koha" \
-    --text="Configurando as portas INTRAPORT e OPACPORT no arquivo koha-sites.conf..." \
+    --text="Configurando INTRAPORT e OPACPORT..." \
     --percentage=0 --auto-close
 
-yad --info --title="Portas configuradas com sucesso" \
-    --text="As portas foram configuradas com sucesso!\n\n$PORT_SET\n• INTRAPORT (Staff): $INTRAPORT\n• OPACPORT (OPAC): $OPACPORT\n\nBackup salvo em: /etc/koha/koha-sites.conf.backup"
-
-# --------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 9 - Configuração do Apache (mod_cgi, mod_rewrite, headers, proxy_http)
-# -----------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Passo 9: Configuração de Módulos do Apache
+# -----------------------------------------------------------------------------
 (
 echo "10"
-echo "# Habilitando módulo CGI no Apache..."
-# sudo a2enmod cgi
-sleep 1
-echo "40"
-echo "# Habilitando módulo mod_rewrite..."
-# sudo a2enmod rewrite
-sleep 1
-echo "60"
-echo "# Habilitando módulos headers e proxy_http..."
-# sudo a2enmod headers proxy_http
-sleep 1
-echo "90"
+echo "# Habilitando módulos do Apache (cgi, rewrite, headers, proxy_http, deflate)..."
+# sudo a2enmod cgi rewrite headers proxy_http deflate
+sleep 2
+echo "70"
 echo "# Reiniciando Apache..."
 # sudo systemctl restart apache2
 sleep 2
 echo "100"
-echo "# Configuração do Apache concluída."
+echo "# Módulos do Apache habilitados."
 ) | yad --progress \
     --title="Configurando Apache" \
-    --text="Habilitando módulos CGI, rewrite, headers e proxy_http no Apache..." \
+    --text="Habilitando módulos essenciais no Apache..." \
     --percentage=0 --auto-close
 
-yad --info --title="Configuração do Apache" \
-    --text="A configuração do Apache foi concluída com sucesso.\n\nMódulos habilitados: CGI, rewrite, headers, proxy_http"
+# -----------------------------------------------------------------------------
+# Passo 10 e 11: Criar instância, Plack e Tradução
+# -----------------------------------------------------------------------------
+INSTANCE_NAME=""
+KOHA_PASS="[Senha aparecerá aqui ao descomentar os comandos]"
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 10 - Configuração final e criação de instância (opcional)
-# -------------------------------------------------------------------------------------------------------------------------------------------
 yad --question --title="Criar instância do Koha?" \
-    --text="Deseja criar uma instância do Koha agora?\n\n(Isso criará um banco de dados e configurará o site)"
+    --text="Deseja criar uma instância do Koha agora?"
 
 if [ $? -eq 0 ]; then
-    # Solicita nome da instância
     INSTANCE_NAME=$(yad --entry --title="Nome da Instância" \
         --text="Digite o nome da instância do Koha:" \
         --entry-text="biblioteca")
     
-    if [ ! -z "$INSTANCE_NAME" ]; then
+    if [ -n "$INSTANCE_NAME" ]; then
         (
         echo "10"
-        echo "# Criando instância: $INSTANCE_NAME"
-        # sudo koha-create --create-db $INSTANCE_NAME
-        sleep 3
-        echo "50"
-        echo "# Habilitando site no Apache..."
-        # sudo a2ensite $INSTANCE_NAME
-        sleep 1
-        echo "80"
-        echo "# Recarregando Apache..."
+        echo "# Criando instância: $INSTANCE_NAME..."
+        # sudo koha-create --create-db "$INSTANCE_NAME"
+        sleep 2
+        echo "40"
+        echo "# Habilitando e iniciando Plack..."
+        # sudo koha-plack --enable "$INSTANCE_NAME"
+        # sudo koha-plack --start "$INSTANCE_NAME"
+        sleep 2
+        echo "70"
+        echo "# Instalando tradução pt-BR..."
+        # sudo koha-translate --install pt-BR
+        sleep 2
+        echo "90"
+        echo "# Ajustando sites do Apache..."
+        # sudo a2dissite 000-default
+        # sudo a2ensite "$INSTANCE_NAME"
         # sudo systemctl reload apache2
         sleep 1
         echo "100"
-        echo "# Instância criada com sucesso!"
+        echo "# Instância '$INSTANCE_NAME' configurada com sucesso!"
         ) | yad --progress \
-             --title="Criando instância do Koha" \
-             --text="Criando instância: $INSTANCE_NAME" \
+             --title="Criando Instância do Koha" \
+             --text="Criando e configurando instância: $INSTANCE_NAME..." \
              --percentage=0 --auto-close
         
-        # Obter senha do usuário koha_admin
-        # KOHA_PASS=$(sudo koha-passwd $INSTANCE_NAME)
-        
-        yad --info --title="Instância criada" \
-            --text="Instância '$INSTANCE_NAME' criada com sucesso!\n\nCopie e salve as informações abaixo para posterior acesso ao banco de dados do KOha\nUsuário: koha_$INSTANCE_NAME\nSenha: [descomente o comando koha-passwd para obter]"
+        # Recuperação de senha real (comentada)
+        # KOHA_PASS=$(sudo koha-passwd "$INSTANCE_NAME")
     fi
 fi
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 11 - Definir um módulo do Apache para trabalhos do koha-plack
-# -------------------------------------------------------------------------------------------------------------------------------------------
-
-# Defina a instância do Koha aqui
-
+# -----------------------------------------------------------------------------
+# Passo 12: Liberar portas no ports.conf do Apache
+# -----------------------------------------------------------------------------
 (
 echo "10"
-echo "# Habilitando o plack para a instância '$INSTANCE_NAME'..."
-# sudo koha-plack --enable "$INSTANCE_NAME"
+echo "# Verificando e liberando portas $INTRAPORT e $OPACPORT no Apache..."
+# grep -q "Listen $INTRAPORT" /etc/apache2/ports.conf || echo "Listen $INTRAPORT" | sudo tee -a /etc/apache2/ports.conf
+# grep -q "Listen $OPACPORT" /etc/apache2/ports.conf || echo "Listen $OPACPORT" | sudo tee -a /etc/apache2/ports.conf
 sleep 2
-
-echo "50"
-echo "# Iniciando o plack para a instância '$INSTANCE_NAME'..."
-# sudo koha-plack --start "$INSTANCE_NAME"
-sleep 2
-
 echo "80"
-echo "# Reiniciando o Apache2 para aplicar alterações..."
-# sudo service apache2 restart
-sleep 2
-
+echo "# Reiniciando Apache2..."
+# sudo systemctl restart apache2
+sleep 1
 echo "100"
-echo "# Módulo do Koha-Plack configurado com sucesso para '$INSTANCE_NAME'."
-) | yad --progress \
-         --title="Configurando Koha-Plack" \
-         --text="Configurando módulo Plack do Apache para o Koha..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 12 - Instalar a tradução do Português BR
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Instalando tradução para Português do Brasil (pt-BR)..."
-# sudo koha-translate --install pt-BR
-sleep 2
-
-echo "100"
-echo "# Tradução pt-BR instalada com sucesso."
-) | yad --progress \
-         --title="Instalando tradução pt-BR" \
-         --text="Instalando tradução do Koha para Português do Brasil..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 13 - Configurar módulos e sites
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Desabilitando site padrão do Apache (000-default)..."
-# sudo a2dissite 000-default
-sleep 2
-
-echo "30"
-echo "# Habilitando módulo Deflate do Apache..."
-# sudo a2enmod deflate
-sleep 2
-
-echo "60"
-echo "# Habilitando site do Apache para o Koha: '$INSTANCE_NAME'..."
-# sudo a2ensite "$INSTANCE_NAME"
-sleep 2
-
-echo "90"
-echo "# Reiniciando Apache2 para aplicar alterações..."
-# sudo service apache2 restart
-sleep 2
-
-echo "100"
-echo "# Configuração de módulos e sites concluída para '$INSTANCE_NAME'."
-) | yad --progress \
-         --title="Configurando Apache para Koha" \
-         --text="Configurando módulos e sites do Apache para o Koha..." \
-         --percentage=0 --auto-close
-
-# -------------------------------------------------------------------------------------------------------------------------------------------
-#  Passo 14 - Configurar o Apache para liberar as portas 8080 e 8888 automaticamente
-# -------------------------------------------------------------------------------------------------------------------------------------------
-(
-echo "10"
-echo "# Verificando se as portas já estão configuradas no ports.conf..."
-sleep 2
-
-# Verifica e adiciona se necessário
-if ! grep -q "Listen $INTRAPORT" /etc/apache2/ports.conf; then
-    echo "Listen $INTRAPORT" | sudo tee -a /etc/apache2/ports.conf > /dev/null
-fi
-
-if ! grep -q "Listen $OPACPORT" /etc/apache2/ports.conf; then
-    echo "Listen $OPACPORT" | sudo tee -a /etc/apache2/ports.conf > /dev/null
-fi
-
-echo "80"
-echo "# Reiniciando Apache2 para aplicar alterações..."
-sudo service apache2 restart
-sleep 2
-
-echo "100"
-echo "# Configuração concluída. Apache escutando nas portas $INTRAPORT e $OPACPORT."
-
+echo "# Apache escutando nas portas $INTRAPORT e $OPACPORT."
 ) | yad --progress \
          --title="Configurando portas do Apache" \
-         --text="Configurando o Apache para liberar as portas $INTRAPORT e $OPACPORT automaticamente..." \
+         --text="Liberando portas $INTRAPORT e $OPACPORT no ports.conf..." \
          --percentage=0 --auto-close
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
-# Passo 15 - Iniciar a instalação do software pelo instalador Web do Koha
-# -------------------------------------------------------------------------------------------------------------------------------------------
-
-# Recupera o IP fora do subshell para poder usar no yad
+# -----------------------------------------------------------------------------
+# Passo 13: Tela Final de Acesso
+# -----------------------------------------------------------------------------
 IP_MACHINE=$(hostname -I | awk '{print $1}')
 
-(
-echo "10"
-echo "# Preparando ambiente e recuperando IP da máquina para acesso em rede..."
-sleep 2
-
-echo "50"
-echo "# Preparando informações para o acesso ao instalador Web do Koha..."
-sleep 2
-
-echo "100"
-echo "# Instalação Web pronta para ser iniciada!"
-) | yad --progress \
-         --title="Instalador Web do Koha" \
-         --text="Preparando o ambiente para exibir as informações de acesso..." \
-         --percentage=0 --auto-close
-
-# Após a barra de progresso, exibe informações finais
 yad --info \
     --title="Instalação Web do Koha" \
-    --text="<b>Instalação via navegador (Web Installer do Koha)</b>\n - Agora inicie a INSTALAÇÃO do Koha via instalador Web:\n<a href='http://localhost:$INTRAPORT'>http://localhost:$INTRAPORT</a>\n- Acesso via rede (outra máquina na mesma rede):\n<a href='http://$IP_MACHINE:$INTRAPORT'>http://$IP_MACHINE:$INTRAPORT</a>\n<b>Credenciais iniciais:</b>\nUsername: Koha_$INSTANCE_NAME\nPassword: $KOHA_PASS\n<b>Importante:</b>\nSiga o passo a passo do instalador Web para concluir a configuração do Koha. \nApós a instalação, você poderá acessar o OPAC (catálogo público) em:\n<a href='http://localhost:$OPACPORT'>http://localhost:$OPACPORT</a>\nClique em Ok para concluir a instalção pelo instalador Web"
+    --width=480 \
+    --text="<b>Instalação Pronta para o Instalador Web</b>\n\n"\
+"• <b>Acesso Interno (Staff):</b>\n<a href='http://localhost:$INTRAPORT'>http://localhost:$INTRAPORT</a>\n\n"\
+"• <b>Acesso em Rede:</b>\n<a href='http://$IP_MACHINE:$INTRAPORT'>http://$IP_MACHINE:$INTRAPORT</a>\n\n"\
+"• <b>Catálogo OPAC:</b>\n<a href='http://localhost:$OPACPORT'>http://localhost:$OPACPORT</a>\n\n"\
+"<b>Credenciais Iniciais:</b>\n"\
+"• Usuário: <code>koha_$INSTANCE_NAME</code>\n"\
+"• Senha: <code>$KOHA_PASS</code>\n\n"\
+"<i>Aba do navegador pronta para ser finalizada no instalador web após executar na VM.</i>"
 
 exit 0
